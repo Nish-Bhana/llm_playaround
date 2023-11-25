@@ -1,40 +1,39 @@
 #!/bin/bash
-set -e
 
-# Set the required Python version
-required_python_version="python3.11"
+# Replace these variables with your desired Python version and environment name
+PYTHON_VERSION="3.11.1"
+ENV_NAME="llm_playaround"
 
-# Check for Python 3.11 and pip3 installation
-if ! command -v $required_python_version &> /dev/null; then
-    echo "$required_python_version could not be found. Please install it and rerun the script."
-    exit 1
+# Check if the specified Python version is installed
+if ! pyenv versions | grep -q $PYTHON_VERSION; then
+    echo "Installing Python $PYTHON_VERSION..."
+    pyenv install $PYTHON_VERSION
 fi
 
-if ! command -v pip3 &> /dev/null; then
-    echo "pip3 could not be found. Please ensure it is installed and rerun the script."
-    exit 1
-fi
-
-environment_name="virtual_env"
-
-# Create a Python virtual environment
-echo "Creating a virtual environment named $environment_name..."
-$required_python_version -m venv "$environment_name"
+# Create the virtual environment
+echo "Creating virtual environment '$ENV_NAME' with Python $PYTHON_VERSION..."
+pyenv virtualenv $PYTHON_VERSION $ENV_NAME
 
 # Activate the virtual environment
-source "$environment_name/bin/activate"
+echo "Activating the virtual environment '$ENV_NAME'..."
+pyenv activate $ENV_NAME
 
-# Upgrade pip
-echo "Upgrading pip in the virtual environment..."
 pip install --upgrade pip
 
-# Install key packages
-echo "Installing key packages: Jupyter, NumPy, pandas, Matplotlib, SciPy..."
-pip install jupyter numpy pandas matplotlib scipy
+# Your script can include commands that should run inside the virtual environment
+echo "Installing dependencies..."
+if [ -f requirements.txt ]; then
+    pip install -r requirements.txt
+else
+    echo "No requirements.txt file found"
+fi
 
 # Set up the virtual environment as a Jupyter kernel
 echo "Setting up Jupyter kernel..."
 pip install ipykernel
-$required_python_version -m ipykernel install --user --name="$environment_name"
+python -m ipykernel install --user --name="$ENV_NAME"
 
-echo "Setup complete. Virtual environment '$environment_name' is ready and added as a Jupyter kernel."
+pyenv local $ENV_NAME
+
+# Note: This script doesn't include the deactivation step. Typically, you'd
+# deactivate the environment manually when you're done with it.
